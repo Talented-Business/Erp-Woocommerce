@@ -34,8 +34,7 @@ namespace woocommerce
             //List<ProductCategory> createCategories = new List<ProductCategory>();
             List<int> deleteCategories = new List<int>();
             List<ProductCategory> updateCategories = new List<ProductCategory>();
-            List<Category> addCategories = new List<Category>();
-            addCategories = erpCategories;
+            List<Category> addCategories = erpCategories.GetRange(0, erpCategories.Count);
             foreach (ProductCategory category in productCategories)
             {
                 //MessageBox.Show(category.id.ToString());
@@ -51,6 +50,7 @@ namespace woocommerce
                         {
                             ProductCategory updatecategory = new ProductCategory()
                             {
+                                id = cc.idwoocommerce,
                                 name = cc.name
                             };
                             updateCategories.Add(updatecategory);
@@ -58,7 +58,10 @@ namespace woocommerce
                         isExist = true;
                     }
                 }
-                if(isExist == false)deleteCategories.Add(Int32.Parse(category.id.ToString()));
+                if (isExist == false)
+                {
+                    if(category.slug != "uncategorized" || true) deleteCategories.Add(Int32.Parse(category.id.ToString()));
+                }
             }
             foreach (Category cc in addCategories) {
                 MessageBox.Show("Add end");
@@ -70,15 +73,22 @@ namespace woocommerce
                 cc.idwoocommerce = Int32.Parse(categoryReturn.id.ToString());
                 cc.update();
             }
-            MessageBox.Show("end");
             productCategoryBatch.update = updateCategories;
             productCategoryBatch.delete = deleteCategories;
-            var result = await wc.Category.UpdateRange(productCategoryBatch);
-
-            foreach (ProductCategory cc in result.update)
+            try
             {
-                Console.WriteLine(cc.name);
+                var result = await wc.Category.UpdateRange(productCategoryBatch);
+                if (result.update != null) foreach (ProductCategory cc in result.update)
+                {
+                    Console.WriteLine(cc.name);
+                }
             }
+            finally
+            {
+                Console.WriteLine("Excute");
+                MessageBox.Show("end");
+            }
+            Console.WriteLine("Excute End");
         }
         static public void up()
         {
@@ -95,6 +105,7 @@ namespace woocommerce
                     Category category = new Category();
                     category.name = reader["name"].ToString();
                     category.id = Int32.Parse(reader["id"].ToString());
+                    category.idwoocommerce = Int32.Parse(reader["idwoocommerce"].ToString());
                     //MessageBox.Show(String.Format("{0}, {1}", reader["id"], reader["name"]));
                     erpCategories.Add(category);
                 }
